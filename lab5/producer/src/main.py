@@ -26,7 +26,7 @@ class UserRegistered(UserEvent):
 
 
 async def main():
-    kafka_producer = AIOKafkaProducer(bootstrap_servers='localhost:19092')
+    kafka_producer = AIOKafkaProducer(bootstrap_servers='redpanda:9092')
     await kafka_producer.start()
 
     emitter = EventEmitter(KafkaProducer(kafka_producer))
