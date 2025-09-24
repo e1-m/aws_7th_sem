@@ -1,6 +1,8 @@
 import asyncio
+import logging
+import os
 
-from aiokafka import AIOKafkaConsumer
+from aiokafka import AIOKafkaConsumer, TopicPartition
 from pydantic import BaseModel
 from dispytch import EventListener
 from dispytch.kafka import KafkaConsumer
@@ -28,16 +30,21 @@ async def handle_user_registered(
     user = event.body.user
     timestamp = event.body.timestamp
 
-    print(f"[User Registered] {user.id} - {user.email} at {timestamp}")
+    logging.info(f"[User Registered] {user.id} - {user.email} at {timestamp}")
 
 
 async def main():
-    kafka_consumer = AIOKafkaConsumer('user_events',
-                                      bootstrap_servers='redpanda:9092',
+    logging.basicConfig(level=logging.INFO)
+
+    partition = int(os.getenv("KAFKA_PARTITION", "0"))
+    kafka_consumer = AIOKafkaConsumer(bootstrap_servers='redpanda:9092',
                                       enable_auto_commit=False,
                                       group_id='consumer_group_id',
                                       auto_offset_reset='earliest')
     await kafka_consumer.start()
+
+    tp = TopicPartition("user_events", partition)
+    kafka_consumer.assign([tp])
 
     listener = EventListener(KafkaConsumer(kafka_consumer))
     listener.add_handler_group(user_events)

@@ -5,7 +5,7 @@ from aiokafka import AIOKafkaProducer
 from pydantic import BaseModel
 
 from dispytch import EventEmitter, EventBase
-from dispytch.kafka import KafkaProducer
+from dispytch.kafka import KafkaProducer, KafkaEventConfig
 
 
 class User(BaseModel):
@@ -14,15 +14,15 @@ class User(BaseModel):
     name: str
 
 
-class UserEvent(EventBase):
+class UserRegistered(EventBase):
     __topic__ = "user_events"
-
-
-class UserRegistered(UserEvent):
     __event_type__ = "user_registered"
 
     user: User
     timestamp: int
+    __backend_config__ = KafkaEventConfig(
+        partition_key=None
+    )
 
 
 async def main():
@@ -32,16 +32,16 @@ async def main():
     emitter = EventEmitter(KafkaProducer(kafka_producer))
 
     for i in range(10):
-        await emitter.emit(
-            UserRegistered(
-                user=User(
-                    id=str(i),
-                    email=f"example{i}@gmail.com",
-                    name="John Doe",
-                ),
-                timestamp=int(datetime.timestamp(datetime.now())),
-            )
+        event = UserRegistered(
+            user=User(
+                id=str(i),
+                email=f"example{i}@gmail.com",
+                name="John Doe",
+            ),
+            timestamp=int(datetime.timestamp(datetime.now())),
         )
+        event.__backend_config__.partition_key = bytes(i)
+        await emitter.emit(event)
         print(f"event {i} emitted")
         await asyncio.sleep(0.3)
 

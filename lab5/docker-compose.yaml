@@ -30,6 +30,8 @@ services:
     build:
       context: consumer
       dockerfile: ../Dockerfile
+    environment:
+      KAFKA_PARTITION: 0
     depends_on:
       redpanda:
         condition: service_healthy
@@ -38,6 +40,8 @@ services:
     build:
       context: consumer
       dockerfile: ../Dockerfile
+    environment:
+      KAFKA_PARTITION: 1
     depends_on:
       redpanda:
         condition: service_healthy
@@ -46,6 +50,8 @@ services:
     build:
       context: consumer
       dockerfile: ../Dockerfile
+    environment:
+      KAFKA_PARTITION: 2
     depends_on:
       redpanda:
         condition: service_healthy
